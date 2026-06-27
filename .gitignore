@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+.pytest_cache/
+.codegraph/
+*.pyc
+*.wav
+models/
+.DS_Store
+build/
