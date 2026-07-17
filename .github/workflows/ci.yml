@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Swift and Python
+    runs-on: macos-15
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest==9.1.1
+
+      - name: Check shell and Python syntax
+        run: |
+          bash -n build.sh scripts/smoke_test.sh
+          python -m py_compile cli/voice_to_text.py scripts/*.py
+
+      - name: Typecheck Swift app
+        run: |
+          sdk="$(xcrun --show-sdk-path)"
+          swiftc \
+            -target arm64-apple-macos13 \
+            -sdk "$sdk" \
+            -framework SwiftUI \
+            -framework AppKit \
+            -framework Carbon \
+            -framework AVFoundation \
+            -framework ApplicationServices \
+            -framework UserNotifications \
+            -framework ServiceManagement \
+            -parse-as-library \
+            -typecheck app/*.swift
+
+      - name: Run Python tests
+        run: python -m pytest tests/ -q
