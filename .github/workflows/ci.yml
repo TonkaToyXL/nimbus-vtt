@@ -38,21 +38,8 @@ jobs:
           bash -n build.sh scripts/smoke_test.sh
           python -m py_compile cli/voice_to_text.py scripts/*.py
 
-      - name: Typecheck Swift app
-        run: |
-          sdk="$(xcrun --show-sdk-path)"
-          swiftc \
-            -target arm64-apple-macos13 \
-            -sdk "$sdk" \
-            -framework SwiftUI \
-            -framework AppKit \
-            -framework Carbon \
-            -framework AVFoundation \
-            -framework ApplicationServices \
-            -framework UserNotifications \
-            -framework ServiceManagement \
-            -parse-as-library \
-            -typecheck app/*.swift
+      - name: Build Swift app
+        run: swift build --arch arm64
 
       - name: Run Python tests
         run: python -m pytest tests/ -q
